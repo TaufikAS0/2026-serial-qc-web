@@ -1,5 +1,6 @@
 'use strict';
 const $ = id => document.getElementById(id);
+$('server-address').textContent=location.host;
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let token = '', profiles = [], selectedProfile, state, maps, tags = [], busy = false, historySignature = '', currentTab = 'connection', initialized = false;
 const showError = error => { $('notice').textContent = error.message || String(error); };
@@ -53,6 +54,9 @@ async function refreshPorts() {
 async function service() {
   const info=await api('/api/service');
   $('service-state').innerHTML=`Backend: <b>${info.active?'AKTIF':'MATI'}</b><br>Autostart login: <b>${info.autostart?'TERPASANG':'BELUM TERPASANG'}</b><br>Supervisor PID: ${esc(info.supervisor?.pid || 'unknown')}<br>Data lokal: ${esc(info.data_directory)}<br>Retention: ${esc(info.retention)}`;
+  if(info.lan_url) $('service-state').innerHTML += `<br><b>Akses laptop lain: <a href="${esc(info.lan_url)}">${esc(info.lan_url)}</a></b><br>COM berada pada laptop server. Client LAN berbagi koneksi dan hasil yang sama.`;
+  const remote=!['127.0.0.1','localhost'].includes(location.hostname);
+  ['autostart','uninstall','service-restart','service-stop'].forEach(id=>$(id).disabled=remote);
 }
 async function history() {
   const rows=await api('/api/history'), signature=JSON.stringify(rows);

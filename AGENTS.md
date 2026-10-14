@@ -8,7 +8,7 @@ Baca `04_Dokumen/IMPLEMENTATION_PROMPT.md` dan `04_Dokumen/STATUS.md` sebelum im
 - Push branch dan ajukan PR ke develop, jangan merge otomatis atau push langsung main/develop.
 - RS232/RS485 bukan format pesan. Setiap PASS membutuhkan aturan test dan bukti; raw monitor hanya menampilkan data.
 - Tidak ada ketergantungan inti pada ESP, IP device, API arm, GPIO, MCP, atau jumlah dua tag. Integrasi spesifik harus diisolasi.
-- Gunakan localhost/loopback, satu pemilik port, konfigurasi portable, bounded logs dan retention. Jangan menjalankan payload serial otomatis setelah reboot/crash.
+- Default localhost/loopback. User secara eksplisit meminta akses laptop lain melalui LAN pada 2026-10-14: LAN boleh diaktifkan lewat konfigurasi per-machine opt-in, subnet privat dan Host/Origin allowlist. Jangan expose internet otomatis. Tetap satu pemilik port, konfigurasi portable, bounded logs/retention; jangan menjalankan payload serial otomatis setelah reboot/crash.
 - Aktifkan startup/recovery secara transparan dengan installer, status dan uninstaller. Jangan ubah sleep/power policy diam-diam.
 - Jangan commit credentials, konfigurasi mesin, atau data produksi. Profil JSON tidak mengeksekusi script arbitrary.
 - Mock transport dilabel SIMULASI; software tests bukan hardware acceptance.

@@ -1,5 +1,11 @@
 # Checkpoint — 14 Oktober 2026, Asia/Jakarta
 
+## Lanjutan: akses LAN eksplisit
+
+User meminta pola portal/ESP scanner untuk akses laptop lain. Ditambahkan enable-lan/disable-lan opt-in dan konfigurasi network di data per-user, bind IPv4 dengan guard exact Host/Origin dan client subnet RFC1918. COM tetap laptop server; owner tunggal. Layanan Windows hanya dikelola localhost. HTTP port aplikasi terpisah dari portal HTTPS 8443, tanpa perubahan portal/power/firmware. Firewall helper hanya membuka TCP app port/address/subnet; memerlukan UAC admin.
+
+Verifikasi: 49 automated tests PASS (4.216s), termasuk 6 LAN tests (private subnet, Host/Origin, remote Windows-management denial, config persistence dan mock control); delapan lifecycle checks PASS. Browser nyata pada alamat LAN Connect MOCK + scenario Modbus PASS SIMULASI. Restart backend tetap HTTP health OK melalui LAN, connected=false/owner=null tanpa auto-send. Rule firewall aplikasi dibuat setelah persetujuan UAC dan Enabled=true, scoped ke IPv4 server/subnet lokal/TCP port aplikasi; konfigurasi mesin tetap di data per-user, tidak Git. Autostart tetap terpasang. Akses dari laptop kedua belum dibuktikan sampai user mencoba.
+
 ## Baseline
 
 PR #1 OPEN; develop `2b0ea2a`. Implementasi dari spesifikasi `f7b811a50ee1a6323f95d9865bab580af71856d8`, branch `feature/serial-protocol-web`; PR ke develop bergantung spesifikasi #1. Tidak merge otomatis. Scope generik tanpa ESP/IP/Compact. Tidak membuka COM, mengirim payload hardware, upload firmware atau mengubah power policy.

@@ -36,6 +36,18 @@ Alternatif: `.venv\Scripts\python.exe launcher.py start --port 8771 --data "D:\S
 
 ## Hardware dan batas
 
+### Akses dari laptop lain melalui LAN
+
+LAN opsional diaktifkan secara eksplisit pada laptop server:
+
+```bat
+.venv\Scripts\python.exe launcher.py enable-lan --lan-host ALAMAT_IPV4_SERVER --lan-subnet CIDR_LAN
+```
+
+Contoh `--lan-host 192.168.1.122 --lan-subnet 192.168.1.0/24`; gunakan IP/subnet nyata laptop server. Buka `http://IP_SERVER:8770/` dari laptop lain pada jaringan yang sama. HTTP ini mengikuti pola ESP scanner; bukan HTTPS dan bukan port portal 8443. USB/COM tetap terpasang pada **laptop server**, bukan laptop client. Semua client berbagi state dan satu owner port; fitur Stop test tersedia dari LAN, pengelolaan layanan Windows hanya localhost. Perangkat pada subnet yang diizinkan dapat memakai aplikasi; tidak ada autentikasi pengguna pada mode LAN ini, jadi gunakan jaringan lab yang dipercaya.
+
+Konfigurasi `network.json` disimpan di direktori data per-user, bukan Git; autostart/recovery memakainya. Double-click **Enable LAN Firewall.cmd** lalu setujui UAC untuk membuka firewall. Alternatif: helper `scripts/Set-LAN-Firewall.ps1` sebagai Administrator, parameter `-DataDirectory` sesuai Status; aturan terbatas TCP port aplikasi, IPv4 server dan subnet yang dipilih, tidak menonaktifkan firewall. Kategori jaringan Windows tidak diubah. Jika IP/subnet DHCP berubah, ulangi enable-lan dan helper firewall. `launcher.py disable-lan` mengembalikan backend ke loopback; helper `-Action Uninstall` menghapus aturan firewall aplikasi.
+
 Pilih adapter/DUT dan COM secara eksplisit. COM terdeteksi bukan bukti jenis adapter atau DUT sehat. Gunakan [wiring/checklist](04_Dokumen/HARDWARE.md), settings dan kontrak payload datasheet. RS232/RS485 adalah antarmuka listrik, bukan protokol pesan universal. Demo tidak boleh dikirim ke DUT yang kontraknya tidak diketahui.
 
 Master/slave/terminal/runner memakai satu owner, tidak dapat berebut port. Slave pada hardware berlabel **REAL SERIAL + SYNTHETIC VALUES**; respons TX belum membuktikan master eksternal mengolahnya. RS485 auto-direction baseline; RTS-only belum didukung. DTR/RTS dapat berubah saat driver membuka port.

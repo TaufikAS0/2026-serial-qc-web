@@ -79,6 +79,8 @@ def autostart(enable, directory, port):
 
 
 def status(directory, port):
+    from .network import load_network
+    network = load_network(directory)
     active = False
     try:
         with urllib.request.urlopen(f'http://127.0.0.1:{port}/api/health', timeout=1) as reply:
@@ -96,7 +98,7 @@ def status(directory, port):
             pass
     pid_path = directory / 'supervisor.json'
     supervisor = json.loads(pid_path.read_text()) if pid_path.exists() else None
-    return dict(active=active, autostart=installed, supervisor=supervisor, data_directory=str(directory), url=f'http://127.0.0.1:{port}', retention='200 runs / 64 MB; 1 MB and 500 detailed steps/run; 1000 log events; rotated logs 8 MB total; SQLite ceiling 128 MiB', sleep='Sleep/shutdown menghentikan komunikasi; reconnect dan start manual setelah wake')
+    return dict(active=active, autostart=installed, supervisor=supervisor, data_directory=str(directory), url=f'http://127.0.0.1:{port}', lan_url=f"http://{network['host']}:{port}/" if network else None, lan_subnet=network['subnet'] if network else None, retention='200 runs / 64 MB; 1 MB and 500 detailed steps/run; 1000 log events; rotated logs 8 MB total; SQLite ceiling 128 MiB', sleep='Sleep/shutdown menghentikan komunikasi; reconnect dan start manual setelah wake')
 
 
 def supervise(directory, port):
@@ -145,10 +147,13 @@ def serve(directory, port):
         from .app import create_app
         from waitress import create_server
         import threading
-        app = create_app(directory, port)
+        from .network import load_network
+        network = load_network(directory)
+        app = create_app(directory, port, network)
         app.logger.handlers = log.handlers
-        server = create_server(app, host='127.0.0.1', port=port, threads=6)
-        log.info('Listening 127.0.0.1:%s; disconnected', port)
+        host = '0.0.0.0' if network else '127.0.0.1'
+        server = create_server(app, host=host, port=port, threads=6, max_request_body_size=250000, connection_limit=50)
+        log.info('Listening %s:%s; LAN=%s; disconnected', host, port, bool(network))
         def stop_watch():
             while not (directory / 'stop.request').exists():
                 time.sleep(.2)
@@ -187,14 +192,28 @@ def stop(directory, port):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('action', choices=['start', 'stop', 'restart', 'status', 'open', 'install-autostart', 'uninstall-autostart', 'disable-autostart', 'supervise', 'serve'])
+    parser.add_argument('action', choices=['start', 'stop', 'restart', 'status', 'open', 'install-autostart', 'uninstall-autostart', 'disable-autostart', 'supervise', 'serve', 'enable-lan', 'disable-lan'])
+    parser.add_argument('--lan-host')
+    parser.add_argument('--lan-subnet')
     parser.add_argument('--data', type=Path, default=data_dir())
     parser.add_argument('--port', type=int, default=8770)
     args = parser.parse_args()
     if not 1024 <= args.port <= 65535:
         parser.error('Port harus 1024..65535')
     directory = args.data.resolve()
-    if args.action == 'serve':
+    if args.action == 'enable-lan':
+        from .network import save_network
+        if not args.lan_host or not args.lan_subnet:
+            parser.error('enable-lan memerlukan --lan-host IPv4 --lan-subnet CIDR')
+        save_network(directory, args.lan_host, args.lan_subnet)
+        stop(directory, args.port)
+        start(directory, args.port)
+        print(json.dumps(status(directory, args.port), indent=2))
+    elif args.action == 'disable-lan':
+        (directory / 'network.json').unlink(missing_ok=True)
+        stop(directory, args.port)
+        start(directory, args.port)
+    elif args.action == 'serve':
         serve(directory, args.port)
     elif args.action == 'supervise':
         supervise(directory, args.port)

@@ -8,7 +8,7 @@ from .profiles import validate
 from .store import Store, export_csv
 
 
-def create_app(directory, port=8770):
+def create_app(directory, port=8770, network=None):
     app = Flask(__name__, static_folder='static', static_url_path='/static')
     app.config['MAX_CONTENT_LENGTH'] = 250000
     store = Store(Path(directory))
@@ -24,10 +24,15 @@ def create_app(directory, port=8770):
     app.engine = engine
     token = secrets.token_urlsafe(32)
     allowed_hosts = {f'127.0.0.1:{port}', f'localhost:{port}'}
+    if network:
+        allowed_hosts.add(f"{network['host']}:{port}")
     allowed_origins = {f'http://{host}' for host in allowed_hosts}
 
     @app.before_request
     def guard():
+        from .network import allowed_peer
+        if not allowed_peer(request.remote_addr or '', network):
+            return jsonify(error='Alamat client di luar jaringan LAN yang diizinkan'), 403
         if request.host not in allowed_hosts:
             return jsonify(error='Host ditolak'), 403
         if request.headers.get('Origin') and request.headers['Origin'] not in allowed_origins:
@@ -104,10 +109,15 @@ def create_app(directory, port=8770):
     @app.get('/api/service')
     def service():
         from .lifecycle import status
-        return jsonify(status(Path(directory), port))
+        info = status(Path(directory), port)
+        if request.remote_addr not in ('127.0.0.1', '::1'):
+            info['data_directory'] = 'Data tersimpan pada laptop server'
+        return jsonify(info)
 
     @app.post('/api/action/<action>')
     def action(action):
+        if action in ('install-autostart', 'uninstall-autostart', 'disable-autostart', 'service-stop', 'service-restart') and request.remote_addr not in ('127.0.0.1', '::1'):
+            return jsonify(error='Pengelolaan layanan Windows hanya dari localhost laptop server'), 403
         body = request.get_json()
         result = None
         if action == 'connect':
