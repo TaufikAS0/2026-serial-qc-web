@@ -58,7 +58,7 @@ Sleep/shutdown menghentikan komunikasi; power policy tidak diubah. Jeda sistem >
 
 Transport/ownership `engine.py`, codec `protocol.py`, validator `profiles.py`, SQLite/export `store.py`, Flask API `app.py`, Waitress/pythonw supervisor `lifecycle.py`, frontend lokal `static/`. Pilihan Python/pyserial + Waitress **8/10** untuk workbench lokal: sederhana dan driver Windows tersedia; batasnya jitter OS/USB, dependency Python, dan hardware interoperability belum dibuktikan. Tidak diklaim bersertifikasi Modbus. [Spesifikasi resmi](https://www.modbus.org/modbus-specifications), [pyserial API](https://pyserial.readthedocs.io/en/latest/pyserial_api.html).
 
-Loopback-only, Host/Origin/token/CSP guards, tanpa CORS. Proses lain dengan akses akun Windows yang sama berada di luar batas keamanan ini. Collision port tidak mematikan aplikasi lain. Supervisor restart backend dengan backoff 2–60s; jika supervisornya dimatikan, Start/login diperlukan.
+Default loopback; LAN privat hanya setelah enable-lan eksplisit. Host/Origin/token/CSP guards tetap aktif, tanpa CORS. Proses lain dengan akses akun Windows yang sama berada di luar batas keamanan ini. Collision port tidak mematikan aplikasi lain. Supervisor restart backend dengan backoff 2–60s; jika supervisornya dimatikan, Start/login diperlukan.
 
 Data `%LOCALAPPDATA%\SerialProtocolTestWeb` (packaged Windows dapat memberi path virtual; lihat Status/UI), di luar repo. History max 200 run/64 MB, detail max 500 langkah/1 MB/run, SQLite ceiling 128 MiB, RX 8192 bytes, ring 1000 event × 4096 bytes. Logs backend/supervisor masing-masing 1 MB × 4 = 8 MB total. Truncation/dropped eksplisit; export sebelum retention. Hapus riwayat melalui aksi eksplisit UI.
 
