@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Serial Protocol Test Web profile v1",
+  "type": "object", "additionalProperties": false,
+  "required": ["version", "name", "protocol", "steps"],
+  "properties": {
+    "version": {"const": 1},
+    "name": {"type": "string", "minLength": 1, "maxLength": 100},
+    "notes": {"type": "string", "maxLength": 1000},
+    "protocol": {"enum": ["raw", "modbus"]},
+    "fixture": {"enum": ["MOCK", "REAL", "LOOPBACK"], "default": "MOCK"},
+    "repeats": {"type": "integer", "minimum": 1, "maximum": 1000, "default": 1},
+    "interval": {"type": "number", "minimum": 0.01, "maximum": 60, "default": 0.1},
+    "serial": {"type": "object", "additionalProperties": false, "properties": {
+      "baud": {"type": "integer", "minimum": 300, "maximum": 2000000},
+      "bits": {"enum": [5,6,7,8]}, "parity": {"enum": ["N","E","O","M","S"]},
+      "stop": {"enum": [1,1.5,2]}, "flow": {"enum": ["none","rtscts","xonxoff","dsrdtr"]},
+      "interface": {"enum": ["RS232","RS485"]}
+    }},
+    "steps": {"type": "array", "minItems": 1, "maxItems": 100, "items": {"$ref": "#/$defs/step"}}
+  },
+  "allOf": [
+    {"if": {"properties": {"protocol": {"const": "raw"}}}, "then": {"properties": {"steps": {"items": {"required": ["payload"]}}}}},
+    {"if": {"properties": {"protocol": {"const": "modbus"}}}, "then": {"properties": {"steps": {"items": {"required": ["unit","function","address","count"]}}}}}
+  ],
+  "$defs": {
+    "step": {"type": "object", "additionalProperties": false, "required": ["assertions"], "properties": {
+      "name": {"type": "string", "maxLength": 100},
+      "format": {"enum": ["ASCII","HEX"], "default": "ASCII"},
+      "payload": {"type": "string", "maxLength": 16384},
+      "encoding": {"enum": ["ascii","utf-8","latin-1"], "default": "ascii"},
+      "ending": {"enum": ["none","CR","LF","CRLF"], "default": "none"},
+      "length": {"type": "integer", "minimum": 1, "maximum": 4096},
+      "delimiter_hex": {"type": "string", "minLength": 2, "maxLength": 48},
+      "idle_ms": {"type": "number", "minimum": 5, "maximum": 1000},
+      "timeout": {"type": "number", "minimum": 0.05, "maximum": 30, "default": 1},
+      "unit": {"type": "integer", "minimum": 1, "maximum": 247},
+      "function": {"enum": [1,2,3,4]},
+      "address": {"type": "integer", "minimum": 0, "maximum": 65535},
+      "count": {"type": "integer", "minimum": 1, "maximum": 2000},
+      "type": {"enum": ["uint16","int16","uint32","int32","float32","bits"]},
+      "byte_order": {"enum": ["big","little"]}, "word_order": {"enum": ["big","little"]},
+      "scale": {"type": "number", "minimum": -1000000000000, "maximum": 1000000000000},
+      "offset": {"type": "number", "minimum": -1000000000000, "maximum": 1000000000000},
+      "assertions": {"type": "array", "minItems": 1, "maxItems": 20, "items": {"$ref": "#/$defs/assertion"}}
+    }},
+    "assertion": {"type": "object", "additionalProperties": false, "required": ["kind"], "properties": {
+      "kind": {"enum": ["exact","prefix","contains","length","range","tolerance"]},
+      "hex": {"type": "string", "minLength": 2, "maxLength": 16384},
+      "value": {"type": "integer", "minimum": 1, "maximum": 4096},
+      "min": {"type": "number"}, "max": {"type": "number"}, "target": {"type": "number"},
+      "tolerance": {"type": "number", "minimum": 0}
+    }, "allOf": [
+      {"if": {"properties": {"kind": {"enum": ["exact","prefix","contains"]}}}, "then": {"required": ["hex"]}},
+      {"if": {"properties": {"kind": {"const": "length"}}}, "then": {"required": ["value"]}},
+      {"if": {"properties": {"kind": {"const": "range"}}}, "then": {"required": ["min","max"]}},
+      {"if": {"properties": {"kind": {"const": "tolerance"}}}, "then": {"required": ["target","tolerance"]}}
+    ]}
+  }
+}

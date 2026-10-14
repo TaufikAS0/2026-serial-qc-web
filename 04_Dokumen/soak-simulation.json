@@ -1,0 +1,134 @@
+﻿{
+  "label": "SIMULASI; NOT HARDWARE ACCEPTANCE",
+  "duration_seconds": 120.0,
+  "tx_bytes": 12636,
+  "rx_bytes": 12636,
+  "events": 1000,
+  "dropped": 3954,
+  "rss_start": 19886080,
+  "rss_end": 20959232,
+  "rss_peak_samples": 20590592,
+  "disk_bytes": 94576,
+  "samples": [
+    {
+      "seconds": 0.0,
+      "rss_bytes": 19886080,
+      "events": 3
+    },
+    {
+      "seconds": 5.0,
+      "rss_bytes": 19988480,
+      "events": 177
+    },
+    {
+      "seconds": 10.0,
+      "rss_bytes": 20099072,
+      "events": 353
+    },
+    {
+      "seconds": 15.0,
+      "rss_bytes": 20205568,
+      "events": 527
+    },
+    {
+      "seconds": 20.0,
+      "rss_bytes": 20303872,
+      "events": 701
+    },
+    {
+      "seconds": 25.0,
+      "rss_bytes": 20398080,
+      "events": 875
+    },
+    {
+      "seconds": 30.0,
+      "rss_bytes": 20480000,
+      "events": 1000
+    },
+    {
+      "seconds": 35.0,
+      "rss_bytes": 20496384,
+      "events": 1000
+    },
+    {
+      "seconds": 40.0,
+      "rss_bytes": 20500480,
+      "events": 1000
+    },
+    {
+      "seconds": 45.0,
+      "rss_bytes": 20582400,
+      "events": 1000
+    },
+    {
+      "seconds": 50.0,
+      "rss_bytes": 20590592,
+      "events": 1000
+    },
+    {
+      "seconds": 55.0,
+      "rss_bytes": 20590592,
+      "events": 1000
+    },
+    {
+      "seconds": 60.0,
+      "rss_bytes": 20545536,
+      "events": 1000
+    },
+    {
+      "seconds": 65.0,
+      "rss_bytes": 20545536,
+      "events": 1000
+    },
+    {
+      "seconds": 70.0,
+      "rss_bytes": 20545536,
+      "events": 1000
+    },
+    {
+      "seconds": 75.0,
+      "rss_bytes": 20549632,
+      "events": 1000
+    },
+    {
+      "seconds": 80.0,
+      "rss_bytes": 20553728,
+      "events": 1000
+    },
+    {
+      "seconds": 85.0,
+      "rss_bytes": 20561920,
+      "events": 1000
+    },
+    {
+      "seconds": 90.0,
+      "rss_bytes": 20561920,
+      "events": 1000
+    },
+    {
+      "seconds": 95.0,
+      "rss_bytes": 20578304,
+      "events": 1000
+    },
+    {
+      "seconds": 100.0,
+      "rss_bytes": 20582400,
+      "events": 1000
+    },
+    {
+      "seconds": 105.0,
+      "rss_bytes": 20582400,
+      "events": 1000
+    },
+    {
+      "seconds": 110.0,
+      "rss_bytes": 20582400,
+      "events": 1000
+    },
+    {
+      "seconds": 115.0,
+      "rss_bytes": 20582400,
+      "events": 1000
+    }
+  ]
+}

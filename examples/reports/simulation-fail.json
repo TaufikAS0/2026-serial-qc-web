@@ -1,0 +1,100 @@
+{
+  "id": "0b4bf378-cbc2-402a-ad59-57266278b7c7",
+  "profile": {
+    "version": 1,
+    "name": "Demo Modbus — SIMULASI",
+    "protocol": "modbus",
+    "fixture": "MOCK",
+    "repeats": 3,
+    "interval": 0.1,
+    "steps": [
+      {
+        "name": "Holding 0",
+        "unit": 1,
+        "function": 3,
+        "address": 0,
+        "count": 1,
+        "type": "uint16",
+        "byte_order": "big",
+        "word_order": "big",
+        "timeout": 1,
+        "assertions": [
+          {
+            "kind": "range",
+            "min": 100,
+            "max": 100
+          }
+        ]
+      }
+    ]
+  },
+  "status": "FAIL",
+  "started": "2026-10-14T07:36:52.668507+00:00",
+  "fixture": "MOCK",
+  "serial": {
+    "port": "",
+    "baud": 9600,
+    "bits": 8,
+    "parity": "N",
+    "stop": 1,
+    "flow": "none",
+    "fixture": "MOCK",
+    "interface": "RS232"
+  },
+  "app_version": "0.1.0",
+  "identity": "SIMULASI — DUT sintetis",
+  "results": [
+    {
+      "step": 1,
+      "repeat": 1,
+      "assertions": [
+        {
+          "kind": "range",
+          "min": 100,
+          "max": 100
+        }
+      ],
+      "tx": "01 03 00 00 00 01 84 0a",
+      "rx": "01 03 02 00 64 b9 ae",
+      "error": "CRC Modbus tidak valid / frame parsial",
+      "latency_ms": 16.0
+    },
+    {
+      "step": 1,
+      "repeat": 2,
+      "assertions": [
+        {
+          "kind": "range",
+          "min": 100,
+          "max": 100
+        }
+      ],
+      "tx": "01 03 00 00 00 01 84 0a",
+      "rx": "01 03 02 00 64 b9 ae",
+      "error": "CRC Modbus tidak valid / frame parsial",
+      "latency_ms": 0.0
+    },
+    {
+      "step": 1,
+      "repeat": 3,
+      "assertions": [
+        {
+          "kind": "range",
+          "min": 100,
+          "max": 100
+        }
+      ],
+      "tx": "01 03 00 00 00 01 84 0a",
+      "rx": "01 03 02 00 64 b9 ae",
+      "error": "CRC Modbus tidak valid / frame parsial",
+      "latency_ms": 0.0
+    }
+  ],
+  "completed": 3,
+  "errors": 3,
+  "target": 3,
+  "reason": "3 langkah gagal",
+  "retry_policy": "zero errors; no retry",
+  "ended": "2026-10-14T07:36:53.002618+00:00",
+  "duration_ms": 329.0
+}

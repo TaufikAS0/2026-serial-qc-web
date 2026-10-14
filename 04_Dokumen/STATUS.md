@@ -1,29 +1,36 @@
-# Checkpoint — 2026-10-14 UTC+7
+# Checkpoint — 14 Oktober 2026, Asia/Jakarta
 
-## Scope aktif
+## Baseline
 
-User mengoreksi scope menjadi aplikasi umum test data protokol RS232/RS485 yang selalu tersedia di laptop. Repo diganti dari 2026-compact-serial-qc-web menjadi 2026-serial-qc-web; folder lokal mengikuti slug. Revisi docs ada di feature/general-serial-protocol-handoff, PR ke develop. Prompt lama pada commit bootstrap bukan scope aktif.
+PR #1 OPEN; develop `2b0ea2a`. Implementasi dari spesifikasi `f7b811a50ee1a6323f95d9865bab580af71856d8`, branch `feature/serial-protocol-web`; PR ke develop bergantung spesifikasi #1. Tidak merge otomatis. Scope generik tanpa ESP/IP/Compact. Tidak membuka COM, mengirim payload hardware, upload firmware atau mengubah power policy.
 
-## Status jujur
+## Tahap 1 selesai — core
 
-Dokumentasi saja. Tidak ada source aplikasi, installer, autostart, backend berjalan, atau test hardware dalam repo ini. AI lain di laptop pengguna yang akan mengimplementasikan sisanya. Tidak mengubah firmware/perangkat atau power settings.
+Transport pyserial/COM/settings/reader/satu owner; terminal ASCII/HEX/manual/periodik/bounded log; Modbus FC01..04 master/slave/CRC/exception/types/endian/tag polling; profile v1/framing/assertions/repeats/timeout/PASS gate/cancellation; SQLite/preferences/history/recovery/CSV formula mitigation/JSON/retention. Tes awal 36 PASS; hardware PENDING.
 
-## Checklist AI berikutnya
+## Tahap 2 selesai — UI dan lifecycle
 
-- [x] Prompt generik; Compact hanya integrasi opsional.
-- [x] Spesifikasi backend background, autostart login, restart, stop/status/uninstall, batas sleep.
-- [ ] Core transport dan port ownership, terminal ASCII/HEX.
-- [ ] Modbus master dan slave simulator.
-- [ ] Profil/schema dan scenario/assertion engine.
-- [ ] UI Bahasa Indonesia dan hasil jelas.
-- [ ] Persistence, CSV/JSON, log retention.
-- [ ] Windows launcher dan lifecycle/autostart/recovery.
-- [ ] Tests, simulated fixtures, real browser dan hardware acceptance.
-- [ ] Panduan pengguna dan checkpoint implementasi.
-- [ ] Opsional: profil Compact dari reference setelah core selesai.
+Tujuh panel UI Indonesia, hasil/progress/error/owner/Stop; profil/preset import/export; JSON bukan tampilan utama. Flask/Waitress loopback dengan Host/Origin/token/CSP. Pythonw supervisor, HKCU Run per-user, Start/Stop/Restart/Status/Open, install/disable/uninstall, backoff 2..60s, rotated logs, instance locks.
 
-Langkah berikutnya: gunakan branch scope aktif (atau develop setelah PR digabung), audit dokumen, mulai implementasi generik. Jangan menunggu firmware ESP/IP tertentu. Pelihara Gitflow/PR dan catat exact test evidence.
+Browser nyata: Connect MOCK; ASCII PING/PONG; HEX 00 FF 41; periodik/Stop; tag decoded 100; Start/Stop slave; scenario PASS dan CRC FAIL. Screenshot SIMULASI tersedia. Lifecycle isolated Windows: crash backend → recovery/disconnected/zero TX; run INCOMPLETE; double start same supervisor; backend duplicate blocked; restart/stop idempotent; start kembali tanpa auto-send. Delapan checks PASS.
 
-## Aturan yang dibaca pada bootstrap
+Autostart install dua kali/uninstall dua kali/reinstall diverifikasi. Installed Run registry command dijalankan dari working directory berbeda → health OK. **Backend aktif dan autostart benar-benar terpasang pada laptop ini.** Login/reboot fisik tidak dilakukan; trigger nyata PENDING.
 
-Firmware_AI_Vault_Home, Rules_Nama_dan_Folder_Workspace, Rules_Firmware_Standar, Rules_GitHub_Gitflow, Rules_Kredensial_WiFi, WiFi_HuaweiJIN, Rules_Versioning, Rules_Change_Notifications dan gitflow-guardian. Semua perubahan kini dokumentasi software laptop; versi/build firmware, pin/API/NVS tidak berubah. Profil lab STA HuaweiJIN/AP12345678 tidak menjadi persyaratan koneksi aplikasi generik; tidak ada migrasi NVS.
+## Tahap 3 — hardening
+
+Guard resume sebelum send mencegah worker mendahului reader saat wake. Simulated resume/unplug/busy diuji; CRC FAIL menyimpan RX/latency. Settings/tags/maps disimpan tanpa auto-open COM. Buffer/detail/history/DB/log dibatasi. 41 tests PASS sebelum perubahan terakhir schema/mock inject; final regression berikutnya.
+
+Soak MOCK 120.0s: 12636 TX bytes dan RX sama; 1000 event cap; 3954 dropped; RSS 19,886,080 → 20,959,232 bytes; sampled peak sebelum final 20,590,592; temporary storage 94,576 bytes. Detail soak-simulation.json. Bukan bukti 24/7 atau hardware. Runtime dependencies audit nol vulnerabilities diketahui saat audit; Flask 3.1.3/Werkzeug 3.1.9/pyserial 3.5/Waitress 3.0.2. Sample reports PASS/FAIL dibuat dari fixture sementara sintetis, tidak dari produksi.
+
+## Fakta / inferensi / asumsi / unknown
+
+- Fakta: tests/browser/lifecycle di atas dijalankan; backend/autostart terpasang; COM tidak dibuka.
+- Inferensi: single owner/strict codec mengurangi konflik; seluruh interoperability belum dibuktikan.
+- Asumsi: adapter auto-direction benar dan profil sesuai DUT; pilihan RS485 di UI tidak mengubah hardware.
+- Unknown: karakteristik listrik/timing/adapter/DUT, efek DTR/RTS, hasil master eksternal, reboot/login dan wake fisik. Checklist HARDWARE.md.
+
+## Verifikasi akhir dan langkah berikutnya
+
+Final regression: **43 tests PASS** (3.925s), delapan lifecycle checks PASS, registry autostart activation/idempotence PASS, pip check PASS. Runtime dependency audit: nol vulnerabilities diketahui. Mock inject slave melalui browser menghasilkan request 01 03 00 00 00 01 84 0A dan response 01 03 02 00 64 B9 AF. Raw scenario PASS/Modbus CRC FAIL diperiksa dan screenshot disimpan; error menyimpan actual RX. Browser ditutup/dibuka: koneksi MOCK, counters dan run ID sama. Dua tab: owner periodic terlihat pada kedua tab, Run dinonaktifkan, Stop dari tab kedua berhasil.
+
+Setup/launcher/source/profiles/wiring/reports/UI evidence/Windows lifecycle/CI workflow selesai. Sedang commit/push feature branch dan membuat PR ke develop; SHA parity diperiksa setelah publication. Hardware acceptance membutuhkan pemilihan adapter/DUT eksplisit; tidak menjalankan payload hardware. Compact belum diintegrasikan karena opsional. Autostart login/reboot fisik dan sleep/wake fisik tetap PENDING. Jangan menyatakan software PASS sebagai hardware acceptance.

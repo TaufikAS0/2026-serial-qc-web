@@ -1,0 +1,6 @@
+{
+  "version": 1, "name": "Demo Modbus — SIMULASI", "protocol": "modbus", "fixture": "MOCK",
+  "repeats": 3, "interval": 0.1,
+  "steps": [{"name": "Holding 0", "unit": 1, "function": 3, "address": 0, "count": 1, "type": "uint16", "byte_order": "big", "word_order": "big", "timeout": 1,
+    "assertions": [{"kind": "range", "min": 100, "max": 100}]}]
+}
