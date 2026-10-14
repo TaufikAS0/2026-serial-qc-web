@@ -1,0 +1,22 @@
+# Local runtime, generated artifacts and credentials
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+node_modules/
+dist/
+build/
+data/
+reports/
+logs/
+*.log
+*.sqlite*
+*.db
+local-config.json
+_references/
+.DS_Store
+Thumbs.db
