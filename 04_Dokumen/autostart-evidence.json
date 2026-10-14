@@ -1,0 +1,7 @@
+﻿{
+  "installed": true,
+  "idempotent_install_uninstall": true,
+  "registry_command_execution": "health OK from unrelated working directory",
+  "real_login_reboot": "PENDING; not performed",
+  "power_settings_changed": false
+}

@@ -1,36 +1,44 @@
-# Checkpoint pekerjaan
+# Checkpoint — 14 Oktober 2026, Asia/Jakarta
 
-Tanggal: 2026-10-14 (UTC+7).
+## Lanjutan: akses LAN eksplisit
 
-## Status sebenarnya
+User meminta pola portal/ESP scanner untuk akses laptop lain. Ditambahkan enable-lan/disable-lan opt-in dan konfigurasi network di data per-user, bind IPv4 dengan guard exact Host/Origin dan client subnet RFC1918. COM tetap laptop server; owner tunggal. Layanan Windows hanya dikelola localhost. HTTP port aplikasi terpisah dari portal HTTPS 8443, tanpa perubahan portal/power/firmware. Firewall helper hanya membuka TCP app port/address/subnet; memerlukan UAC admin.
 
-Dokumentasi handoff disiapkan atas permintaan user. Belum ada kode aplikasi, dependensi terpasang, launcher, build, simulasi, atau pengujian hardware di repository baru ini. Implementasi penguji lama berada di repository firmware; belum dipindahkan.
+Verifikasi: 49 automated tests PASS (4.216s), termasuk 6 LAN tests (private subnet, Host/Origin, remote Windows-management denial, config persistence dan mock control); delapan lifecycle checks PASS. Browser nyata pada alamat LAN Connect MOCK + scenario Modbus PASS SIMULASI. Restart backend tetap HTTP health OK melalui LAN, connected=false/owner=null tanpa auto-send. Rule firewall aplikasi dibuat setelah persetujuan UAC dan Enabled=true, scoped ke IPv4 server/subnet lokal/TCP port aplikasi; konfigurasi mesin tetap di data per-user, tidak Git. Autostart tetap terpasang. Akses dari laptop kedua belum dibuktikan sampai user mencoba.
 
-## Langkah pertama AI berikutnya
+## Baseline
 
-Audit source penguji lama dan firmware pada baseline README. Buat tabel kontrak API/frame dari kode nyata, identifikasi gap, lalu implementasikan aplikasi di feature branch repository ini. Gunakan path relatif agar dapat dikerjakan di laptop lain.
+PR #1 OPEN; develop `2b0ea2a`. Implementasi dari spesifikasi `f7b811a50ee1a6323f95d9865bab580af71856d8`, branch `feature/serial-protocol-web`; PR ke develop bergantung spesifikasi #1. Tidak merge otomatis. Scope generik tanpa ESP/IP/Compact. Tidak membuka COM, mengirim payload hardware, upload firmware atau mengubah power policy.
 
-## Checklist
+## Tahap 1 selesai — core
 
-- [x] Prompt implementasi dan referensi baseline.
-- [x] Aturan handoff, Gitflow, dan status jujur.
-- [ ] Audit/reuse source penguji lama beserta provenance.
-- [ ] Dokumentasikan kontrak frame/API aktual dan golden vectors.
-- [ ] Backend serial, kepemilikan port, worker, cancellation.
-- [ ] UI koneksi, QC RS232, QC RS485, status lokal jelas.
-- [ ] Simulator slave Modbus RTU untuk master dua tag pada device.
-- [ ] Riwayat, recovery run terputus, export CSV/JSON.
-- [ ] Launcher Windows dan setup dependency.
-- [ ] Automated tests/parser/error paths dan UI nyata.
-- [ ] Panduan operator/wiring dan contoh export simulasi.
-- [ ] Uji hardware dengan adapter dan device; jangan tandai selesai tanpa bukti.
+Transport pyserial/COM/settings/reader/satu owner; terminal ASCII/HEX/manual/periodik/bounded log; Modbus FC01..04 master/slave/CRC/exception/types/endian/tag polling; profile v1/framing/assertions/repeats/timeout/PASS gate/cancellation; SQLite/preferences/history/recovery/CSV formula mitigation/JSON/retention. Tes awal 36 PASS; hardware PENDING.
 
-## Fakta dan unknowns
+## Tahap 2 selesai — UI dan lifecycle
 
-Firmware referensi v1.5.0 pernah lulus build/software tests di pekerjaan sebelumnya. Hal itu tidak membuktikan aplikasi baru ini tersedia atau hardware sudah menerima firmware. Versi firmware terpasang, alamat IP, dan port COM saat implementasi harus dicek kembali.
+Tujuh panel UI Indonesia, hasil/progress/error/owner/Stop; profil/preset import/export; JSON bukan tampilan utama. Flask/Waitress loopback dengan Host/Origin/token/CSP. Pythonw supervisor, HKCU Run per-user, Start/Stop/Restart/Status/Open, install/disable/uninstall, backoff 2..60s, rotated logs, instance locks.
 
-## Catatan aturan bootstrap
+Browser nyata: Connect MOCK; ASCII PING/PONG; HEX 00 FF 41; periodik/Stop; tag decoded 100; Start/Stop slave; scenario PASS dan CRC FAIL. Screenshot SIMULASI tersedia. Lifecycle isolated Windows: crash backend → recovery/disconnected/zero TX; run INCOMPLETE; double start same supervisor; backend duplicate blocked; restart/stop idempotent; start kembali tanpa auto-send. Delapan checks PASS.
 
-Dibaca dari vault firmware workspace: Firmware_AI_Vault_Home.md, Rules_Nama_dan_Folder_Workspace.md, Rules_Firmware_Standar.md, Rules_GitHub_Gitflow.md, Rules_Kredensial_WiFi.md, WiFi_HuaweiJIN.md, Rules_Versioning.md, Rules_Change_Notifications.md; serta skill gitflow-guardian.
+Autostart install dua kali/uninstall dua kali/reinstall diverifikasi. Installed Run registry command dijalankan dari working directory berbeda → health OK. **Backend aktif dan autostart benar-benar terpasang pada laptop ini.** Login/reboot fisik tidak dilakukan; trigger nyata PENDING.
 
-Ini proyek software laptop/dokumentasi: tidak ada perubahan versi firmware, build, pin, API perangkat, atau NVS. Profil firmware lab yang dibaca adalah STA HuaweiJIN dan AP default 12345678; tidak ada konfigurasi Wi-Fi/NVS yang diterapkan oleh bootstrap ini.
+## Tahap 3 — hardening
+
+Guard resume sebelum send mencegah worker mendahului reader saat wake. Simulated resume/unplug/busy diuji; CRC FAIL menyimpan RX/latency. Settings/tags/maps disimpan tanpa auto-open COM. Buffer/detail/history/DB/log dibatasi. 41 tests PASS sebelum perubahan terakhir schema/mock inject; final regression berikutnya.
+
+Soak MOCK 120.0s: 12636 TX bytes dan RX sama; 1000 event cap; 3954 dropped; RSS 19,886,080 → 20,959,232 bytes; sampled peak sebelum final 20,590,592; temporary storage 94,576 bytes. Detail soak-simulation.json. Bukan bukti 24/7 atau hardware. Runtime dependencies audit nol vulnerabilities diketahui saat audit; Flask 3.1.3/Werkzeug 3.1.9/pyserial 3.5/Waitress 3.0.2. Sample reports PASS/FAIL dibuat dari fixture sementara sintetis, tidak dari produksi.
+
+## Fakta / inferensi / asumsi / unknown
+
+- Fakta: tests/browser/lifecycle di atas dijalankan; backend/autostart terpasang; COM tidak dibuka.
+- Inferensi: single owner/strict codec mengurangi konflik; seluruh interoperability belum dibuktikan.
+- Asumsi: adapter auto-direction benar dan profil sesuai DUT; pilihan RS485 di UI tidak mengubah hardware.
+- Unknown: karakteristik listrik/timing/adapter/DUT, efek DTR/RTS, hasil master eksternal, reboot/login dan wake fisik. Checklist HARDWARE.md.
+
+## Verifikasi akhir dan langkah berikutnya
+
+Final regression: **43 tests PASS** (3.925s), delapan lifecycle checks PASS, registry autostart activation/idempotence PASS, pip check PASS. Runtime dependency audit: nol vulnerabilities diketahui. Mock inject slave melalui browser menghasilkan request 01 03 00 00 00 01 84 0A dan response 01 03 02 00 64 B9 AF. Raw scenario PASS/Modbus CRC FAIL diperiksa dan screenshot disimpan; error menyimpan actual RX. Browser ditutup/dibuka: koneksi MOCK, counters dan run ID sama. Dua tab: owner periodic terlihat pada kedua tab, Run dinonaktifkan, Stop dari tab kedua berhasil.
+
+Setup/launcher/source/profiles/wiring/reports/UI evidence/Windows lifecycle/CI workflow selesai. Implementasi dipublish pada commit `f3137c34269c4b237fbede3ed0d81b94a8e481ac`; local HEAD, origin tracking dan ls-remote cocok, worktree bersih saat verifikasi. [PR #2](https://github.com/TaufikAS0/2026-serial-qc-web/pull/2) OPEN ke develop, 43 changed files termasuk baseline spesifikasi PR #1; tidak merge. Identitas author memakai noreply yang terverifikasi dan sama dengan baseline, tanpa mengubah Git global.
+
+Hardware acceptance membutuhkan pemilihan adapter/DUT eksplisit; tidak menjalankan payload hardware. Compact belum diintegrasikan karena opsional. Autostart login/reboot fisik dan sleep/wake fisik tetap PENDING. Jangan menyatakan software PASS sebagai hardware acceptance. Backend tetap aktif, autostart terpasang; tidak ada periodic/poll/slave aktif setelah pemeriksaan browser.

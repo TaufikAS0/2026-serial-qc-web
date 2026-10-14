@@ -1,0 +1,10 @@
+﻿[
+  "start: health OK",
+  "double start: same supervisor",
+  "forced backend crash: restarted; disconnected; zero TX; run INCOMPLETE",
+  "restart: healthy/disconnected",
+  "duplicate backend: blocked",
+  "stop: supervisor exited",
+  "stop idempotent",
+  "start after stop: no auto send"
+]

@@ -1,0 +1,7 @@
+{
+  "version": 1, "name": "Demo PING — SIMULASI", "protocol": "raw", "fixture": "MOCK",
+  "repeats": 3, "interval": 0.1,
+  "serial": {"baud": 9600, "bits": 8, "parity": "N", "stop": 1, "flow": "none"},
+  "steps": [{"format": "ASCII", "payload": "PING", "encoding": "ascii", "ending": "CRLF", "delimiter_hex": "0d0a", "timeout": 1,
+    "assertions": [{"kind": "exact", "hex": "504f4e470d0a"}]}]
+}

@@ -1,15 +1,17 @@
 # Instruksi AI
 
-Mulai dari `04_Dokumen/IMPLEMENTATION_PROMPT.md` dan `04_Dokumen/STATUS.md`.
+Baca `04_Dokumen/IMPLEMENTATION_PROMPT.md` dan `04_Dokumen/STATUS.md` sebelum implementasi.
 
-- Repository ini adalah software penguji laptop. User meminta AI lain melanjutkan implementasi di laptopnya; bootstrap ini hanya dokumentasi.
-- Audit status/branch/remote sebelum mengubah file. Pertahankan perubahan orang lain.
-- Baseline protokol berasal dari source firmware yang ditautkan README. Endpoint, frame, dan kemampuan harus diverifikasi dari source, bukan dikarang.
-- Reuse implementasi laptop terdahulu setelah audit kompatibilitas dan ketentuan reuse. Catat commit upstream dan file yang diambil. Jangan menyalin seluruh firmware atau secret.
-- Buat feature branch dari develop. Push feature branch dan buka PR ke develop setelah verifikasi; jangan merge otomatis atau push langsung main/develop setelah bootstrap.
-- Default aplikasi lokal loopback; jangan hardcode path mesin, port COM, atau IP perangkat.
-- Pisahkan hasil simulasi, software tests, dan hasil hardware nyata. Tidak ada hardware PASS tanpa bukti.
-- Jangan upload firmware ke perangkat. Jika ada blocker firmware, dokumentasikan perubahan minimal yang diperlukan; jangan diam-diam mengubah kontrak.
-- Perbarui STATUS.md dengan perubahan, tes, commit, blocker, dan langkah berikutnya setiap checkpoint.
-- Tidak ada kredensial privat dalam Git/log/export. Data lokal/hasil produksi harus di-ignore.
-- Jika tugas meluas ke firmware, baca AGENTS dan aturan firmware/versioning pada repository firmware terlebih dahulu. Aturan lab bukan izin menerapkan akses tanpa autentikasi pada semua proyek.
+- Scope aktif: penguji protokol serial umum melalui RS232/RS485, layanan web lokal Windows. Compact QC adalah profil opsional, bukan baseline wajib aplikasi.
+- User meminta dokumentasi siap lanjut; implementasi dilakukan AI berikutnya di laptop pengguna. Jangan mengklaim launcher/service sudah tersedia.
+- Audit branch/status/remote; pertahankan pekerjaan orang lain. Gunakan feature branch dari develop yang sudah memuat revisi scope; jika belum merge, lanjut dari branch revisi aktif dan jelaskan dependensi PR.
+- Push branch dan ajukan PR ke develop, jangan merge otomatis atau push langsung main/develop.
+- RS232/RS485 bukan format pesan. Setiap PASS membutuhkan aturan test dan bukti; raw monitor hanya menampilkan data.
+- Tidak ada ketergantungan inti pada ESP, IP device, API arm, GPIO, MCP, atau jumlah dua tag. Integrasi spesifik harus diisolasi.
+- Default localhost/loopback. User secara eksplisit meminta akses laptop lain melalui LAN pada 2026-10-14: LAN boleh diaktifkan lewat konfigurasi per-machine opt-in, subnet privat dan Host/Origin allowlist. Jangan expose internet otomatis. Tetap satu pemilik port, konfigurasi portable, bounded logs/retention; jangan menjalankan payload serial otomatis setelah reboot/crash.
+- Aktifkan startup/recovery secara transparan dengan installer, status dan uninstaller. Jangan ubah sleep/power policy diam-diam.
+- Jangan commit credentials, konfigurasi mesin, atau data produksi. Profil JSON tidak mengeksekusi script arbitrary.
+- Mock transport dilabel SIMULASI; software tests bukan hardware acceptance.
+- Update STATUS.md setiap checkpoint, termasuk test, blocker, dan next step.
+- Reuse source hanya setelah audit lisensi/provenance/kompatibilitas. Jangan clone seluruh firmware ke core aplikasi.
+- Tidak upload firmware atau mengubah repository firmware. Jika ada kebutuhan perubahan firmware, laporkan secara terpisah.
