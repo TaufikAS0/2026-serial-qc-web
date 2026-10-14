@@ -1,35 +1,29 @@
-# Compact Serial QC Web
+# Serial Protocol Test Web
 
-Aplikasi web lokal di laptop Windows untuk QC RS232/RS485 Compact QC Tester dan fixture slave Modbus RTU.
+Web lokal Windows untuk mengirim, menerima, memantau, dan menguji data protokol melalui adapter USB–RS232 atau USB–RS485 pada berbagai perangkat.
 
-**Status: handoff dokumentasi saja. Aplikasi belum diimplementasikan atau diuji dalam repository ini.**
+**Status: spesifikasi/handoff saja; aplikasi dan layanan startup belum diimplementasikan.**
 
-## Mulai untuk AI berikutnya
+AI berikutnya wajib membaca [AGENTS.md](AGENTS.md), [prompt implementasi lengkap](04_Dokumen/IMPLEMENTATION_PROMPT.md), dan [checkpoint](04_Dokumen/STATUS.md), lalu mengerjakan implementasi di laptop pengguna.
 
-1. Baca [AGENTS.md](AGENTS.md).
-2. Jalankan instruksi lengkap [IMPLEMENTATION_PROMPT.md](04_Dokumen/IMPLEMENTATION_PROMPT.md).
-3. Perbarui [STATUS.md](04_Dokumen/STATUS.md) setelah tiap checkpoint.
+## Cakupan
 
-Repository ini sengaja dipisahkan dari firmware. Audit dan reuse penguji laptop yang sudah ada di repository firmware sebelum menulis ulang.
+- Terminal ASCII/HEX, kirim manual dan periodik, log TX/RX.
+- Modbus RTU master dan simulator slave, alamat/data configurable.
+- Skenario request/response configurable dengan hasil PASS/FAIL berdasarkan aturan eksplisit.
+- Profil perangkat, riwayat, export CSV/JSON.
+- Backend lokal aktif di background, startup otomatis setelah login Windows, restart setelah crash, dan kontrol start/stop/status.
 
-## Referensi firmware
+Default URL yang dituju: http://127.0.0.1:8770. Menutup tab tidak menghentikan backend. Laptop harus menyala dan tidak sleep untuk komunikasi terus berjalan; aplikasi tidak menjanjikan layanan saat shutdown/sleep.
 
-- Repository: https://github.com/TaufikAS0/compact-qc-tester-v2-r1
-- Branch: `feature/qc-operator-ota`.
-- Source baseline v1.5.0: [`fa0624ea3d979f2a87ff3db118a46c4ad6ca0387`](https://github.com/TaufikAS0/compact-qc-tester-v2-r1/tree/fa0624ea3d979f2a87ff3db118a46c4ad6ca0387).
-- Checkpoint dokumentasi: `7481e0af5b6721083e6701bb8cf311ec0137ec9d`.
-- Cari `tools/laptop-qc/`, `Start-Laptop-QC.ps1`, source serial QC/Modbus, dan `04_Dokumen/QC_OPERATOR_GUIDE.md` pada referensi tersebut.
+RS232/RS485 adalah antarmuka listrik, bukan protokol pesan universal. COM terbuka atau data masuk bukan otomatis PASS. Compact QC hanya integrasi opsional; aplikasi inti tidak bergantung pada ESP, GPIO, IP, atau firmware tertentu.
 
-## Penggunaan yang dituju
+## Git dan lanjutan pekerjaan
 
-Launcher Windows membuka web lokal, default `http://127.0.0.1:8770`. Teknisi memilih COM dan mode, menjalankan tes, melihat PASS/FAIL, serta mengekspor CSV/JSON. Port 8769 pada pekerjaan sebelumnya adalah preview dashboard ESP, bukan aplikasi penguji ini.
+Repository publik: https://github.com/TaufikAS0/2026-serial-qc-web
 
-Perintah install/run akan ditambahkan oleh AI implementor setelah aplikasi tersedia. Belum ada launcher dalam repository ini.
+Revisi cakupan berada di `feature/general-serial-protocol-handoff`, diajukan melalui PR ke `develop`. AI berikutnya harus memakai revisi ini; sebelum PR digabung, jangan memakai prompt lama pada develop sebagai scope aktif. Implementasi berikutnya melalui feature branch dan PR; tidak merge otomatis. Belum ada release/main produksi.
 
-## Git
+Nama sebelumnya `2026-compact-serial-qc-web` telah diganti; sejarah Git dipertahankan. Folder lokal mengikuti slug baru.
 
-Bootstrap dokumentasi berada di `develop` sebagai default branch. Implementasi berikutnya memakai `feature/<nama>` dari `develop`, lalu PR ke `develop`. `main` dicadangkan untuk release yang disetujui; belum dibuat karena belum ada release aplikasi.
-
-## Batas publikasi
-
-Hanya spesifikasi dan handoff yang dipublikasikan. Jangan commit token, password privat, konfigurasi mesin, log produksi, atau hasil QC perangkat nyata. Tidak ada firmware yang diupload dalam bootstrap ini.
+Perintah setup/run ditambahkan ketika implementasi tersedia. Tidak ada source aplikasi yang disalin atau firmware yang diupload pada handoff ini.

@@ -1,131 +1,114 @@
-# Prompt implementasi untuk AI berikutnya
+# Prompt implementasi — aplikasi web penguji protokol serial umum
 
-Kamu bertugas menyelesaikan aplikasi web lokal untuk Quality Control komunikasi RS232 dan RS485 pada hardware Compact QC Tester saya. Kerjakan sampai bisa dijalankan, bukan hanya desain atau mockup. Mulai dengan source yang tersedia dan gunakan kembali implementasi yang sudah benar.
+Kerjakan aplikasi web lokal yang terus tersedia di laptop Windows untuk menguji data protokol melalui USB–RS232 dan USB–RS485. Ini aplikasi umum untuk berbagai perangkat. Selesaikan implementasi, launcher, startup, tests, dan panduan; jangan berhenti pada mockup.
 
-## 1. Konteks dan sumber kebenaran
+## 1. Scope dan fakta
 
-Repository aplikasi baru ini adalah tempat pekerjaanmu. Referensi firmware: https://github.com/TaufikAS0/compact-qc-tester-v2-r1, branch `feature/qc-operator-ota`. Baseline firmware v1.5.0 adalah `fa0624ea3d979f2a87ff3db118a46c4ad6ca0387`; checkpoint dokumentasi `7481e0af5b6721083e6701bb8cf311ec0137ec9d`.
+Repository: https://github.com/TaufikAS0/2026-serial-qc-web
+Baca README, AGENTS, STATUS. Prompt ini menggantikan scope lama yang khusus Compact QC.
 
-Verifikasi kondisi terbaru; jangan menganggap main sudah memiliki fitur branch tersebut. Jika source bergerak, catat commit yang digunakan dan alasan memilihnya. Audit ketentuan reuse dan provenance sebelum mengambil file. Jangan menyalin secret atau seluruh firmware ke aplikasi ini.
+RS232 dan RS485 adalah antarmuka listrik; format aplikasi bisa ASCII, binary custom, atau Modbus RTU. Jangan menciptakan satu paket universal lalu menganggap semua perangkat harus merespons. Tidak diperlukan ESP32, Wi-Fi, alamat IP device, atau protokol Compact untuk menjalankan fitur inti.
 
-Cari dan baca pada repo referensi:
-- `tools/laptop-qc/`, termasuk `server.py` dan pendukungnya.
-- `Start-Laptop-QC.ps1`.
-- Source protokol serial QC, routing RS232/RS485, dan Modbus.
-- Tests protokol/worker yang sudah ada.
-- `04_Dokumen/QC_OPERATOR_GUIDE.md`, README, AGENTS, serta checkpoint `ai/`.
+Handoff saat ini hanya dokumen. AI implementor mengerjakan source di laptop pengguna. Jangan mengklaim aplikasi telah berjalan dari status repository dokumen ini.
 
-Path yang belum ditemukan harus dicari, bukan diasumsikan. Clone referensi secara terpisah atau dalam `_references/` yang di-ignore; jangan membuat gitlink/nested repo terlacak. Source aplikasi hasil reuse diletakkan secara normal di repo ini dengan attribution yang sesuai.
+## 2. Arsitektur yang dituju
 
-Dashboard preview ESP sebelumnya menggunakan localhost:8769; aplikasi laptop ditujukan localhost:8770. Keduanya berbeda fungsi. Alamat device dan port COM tidak tetap: teknisi harus bisa mengubahnya.
+Backend lokal Python dengan pyserial dan frontend served same-origin adalah baseline sederhana. Boleh memilih framework ringan yang terpelihara setelah verifikasi dokumentasi resmi; jelaskan alasan bila mengganti stack. Browser tidak harus mengakses Web Serial karena backend mengelola COM.
 
-## 2. Tujuan operator
+Pisahkan transport/port manager, codec/parsers, protocol adapters, test runner, persistence/export, API, frontend, dan background-service management. Jangan duplikasi protokol di frontend. Dependensi dikunci, asset frontend lokal, dapat dipakai tanpa internet setelah setup.
 
-Teknisi menjalankan launcher, membuka web, memasang USB–RS232 atau USB–RS485, memilih COM/mode, menghubungkan device, menekan Mulai QC, lalu melihat hasil dan menyimpan laporan. Aplikasi harus bisa menguji banyak device berturut-turut tanpa restart server.
+Bind 127.0.0.1 secara default, port 8770 configurable. Tangani collision port tanpa menghentikan aplikasi lain. Tidak expose LAN secara otomatis. Validasi origin/host dan lindungi API mutasi dari request lintas origin. Single instance per konfigurasi layanan.
 
-## 3. Arsitektur
+## 3. Selalu aktif di laptop
 
-Utamakan melanjutkan backend Python yang sudah tersedia dengan pyserial, serta frontend yang disajikan backend lokal. Browser adalah antarmuka; backend menangani COM, parser, pengujian, dan penyimpanan. Jangan menduplikasi protokol pada frontend/backend.
+Sediakan installer/startup per-user Windows melalui Scheduled Task saat login atau mekanisme setara yang terdokumentasi. Default tidak memerlukan administrator. Jika operasi sebelum login diminta kelak, dokumentasikan opsi Windows Service terpisah.
 
-Default bind loopback, frontend/API same-origin. Lindungi endpoint perubahan state dari request lintas origin yang tidak diizinkan. Aplikasi harus berjalan tanpa internet setelah dependensi terpasang; hindari CDN runtime.
+Backend berjalan background tanpa terminal mengganggu, startup idempotent, automatic restart dengan bounded backoff saat crash, health endpoint dan log rotasi. Sediakan start, stop, restart, status, disable-autostart, uninstall-autostart, dan Open Web. Uninstall tidak menghapus hasil pengguna tanpa instruksi.
 
-Pisahkan serial transport, encoder/parser, mesin pengujian, integrasi HTTP ESP, penyimpanan/export, dan frontend. Gunakan path relatif dan konfigurasi portable. Jangan mensyaratkan folder atau username laptop pembuat.
+Menutup browser tidak mematikan backend. Membuka ulang browser menampilkan state backend yang sama. Browser tidak otomatis dibuka pada setiap restart layanan; hanya saat pengguna memilih Open Web.
 
-## 4. Hardware dan wiring
+Laptop sleep/shutdown menghentikan komunikasi. Jangan menjanjikan always-on selama itu, dan jangan mengubah power settings diam-diam. Setelah wake/restart, refresh port dan tandai run terputus INCOMPLETE. Jangan melanjutkan pengiriman command atau mengulang write otomatis. Backend tersedia bukan berarti port selalu dikuasai; port dibuka saat pengguna Connect dan dilepas saat Disconnect/cleanup.
 
-Mapping yang diberikan: ESP32 RX GPIO4, TX GPIO5; selector MCP2A2 HIGH/ON untuk RS232 dan LOW/OFF untuk RS485. RS485 PCB memiliki arah otomatis tanpa DE/RE. Cocokkan dengan source sebelum mengirim perintah.
+## 4. Koneksi dan serial transport
 
-Gunakan USB–RS232 untuk port RS232, bukan USB–TTL. Diagram operator: TX adapter ke RX device, RX adapter ke TX device, signal ground. Jangan mengarang nomor DB9.
+Daftar COM dengan deskripsi/USB identity bila tersedia, Refresh, Connect/Disconnect, RS232/RS485 sebagai label fixture, baud, data bits, parity, stop bits, flow control. Default 9600/8N1/no flow control; jelaskan itu preset, bukan standar universal.
 
-Untuk RS485, dokumentasikan pasangan diferensial berdasarkan polaritas/datasheet adapter dan board; label A/B antarvendor tidak boleh diasumsikan sama. Jelaskan referensi ground, terminasi, dan bias sesuai fixture/topologi.
+Pilihan mode di web tidak mengubah hardware adapter RS232 menjadi RS485. Teknisi memakai adapter sesuai jalur. Arah RS485 otomatis sebagai default umum; jika adapter butuh RTS direction control, tampilkan opsi hanya bila backend/adapter mendukung. Validasi settings sebelum membuka port.
 
-Default QC 9600 baud, 8N1, configurable sesuai dukungan firmware. Ini profil awal, bukan klaim semua RS232 wajib memakai konfigurasi itu.
+Satu owner per port; terminal, test runner, Modbus master dan slave tidak boleh rebutan port. Bedakan status backend, port, dan test. Tangani port busy/hilang/berubah, USB unplug, izin, invalid setting, reconnect. Tidak memilih COM lain secara diam-diam setelah reconnect.
 
-## 5. QC RS232
+Wiring guide: RS232 TX ke RX, RX ke TX dan signal ground, bukan USB–TTL. RS485 sesuai polaritas datasheet, ground/terminasi/bias menurut topologi. Jangan mengarang nomor DB9 atau menyamakan label A/B seluruh vendor.
 
-Sebelum coding, temukan dan dokumentasikan kontrak aktual: magic/header, versi, tipe pesan, panjang, run ID, sequence, payload, CRC, endianness, ACK, timeout, akhir sesi, endpoint arm/stop/heartbeat/result. Jangan menciptakan format atau endpoint pengganti tanpa bukti kebutuhan.
+## 5. Terminal raw ASCII/HEX
 
-Default 100 transaksi dan timeout mengikuti firmware. Alur:
-1. Validasi konfigurasi/port dan identitas/kompatibilitas firmware.
-2. Buka serial eksklusif dan siapkan sesi QC device.
-3. Kirim paket melalui adapter dan kabel RS232.
-4. Validasi response, transformasi payload, CRC, run ID, sequence, dan ACK sesuai protokol.
-5. Rekonsiliasi hasil laptop dengan device, lalu cleanup resource.
+Kirim manual, display ASCII/HEX, line ending none/CR/LF/CRLF, explicit encoding, validasi HEX, timestamp TX/RX, counter bytes, clear tampilan dan save log. Data tetap berupa bytes; display decode tidak boleh mengubah payload.
 
-HTTP/Wi-Fi boleh untuk konfigurasi/arm/heartbeat/result; bukti QC serial harus berasal dari data serial fisik. HTTP sukses atau COM berhasil dibuka bukan PASS. Validasi transformasi response jika protokol menyediakannya agar local echo tidak menjadi PASS palsu.
+Kirim periodik configurable dengan Start/Stop eksplisit dan batas laju. Pisahkan TX/RX, tampilkan payload hex untuk binary. Membekukan scroll tidak menghentikan capture. Buffer tampilan dan queue harus bounded, laporkan dropped/truncated logs.
 
-## 6. QC RS485
+Tidak ada PASS otomatis pada terminal hanya karena data diterima. Terminal harus bisa digunakan tanpa test profile dan tanpa HTTP ke device.
 
-Sediakan tes paket dua arah yang setara pada jalur RS485. Reuse protokol QC firmware jika memang didukung, setelah konfirmasi source.
+## 6. Modbus RTU master
 
-Tangani half-duplex, arah otomatis, local echo, response parsial, beberapa frame dalam satu read, timeout, frame rusak, dan data sesi lama. RS232/RS485/Modbus tidak boleh berjalan bersamaan pada UART/port yang sama.
+Laptop sebagai master untuk request ke slave eksternal. Sediakan FC01,02,03,04; slave ID 1..247 untuk read, alamat zero-based, count sesuai batas protokol dan UI, baud/parity/timeout/poll interval.
 
-## 7. Fixture slave Modbus untuk dua tag
+Daftar tag dinamis, bukan wajib dua: name, function, slave, address, length, data type, byte/word order, scale/offset bila diperlukan. Preset dua tag boleh tersedia. Unsigned/signed 16/32-bit, float32, coils/discrete bits; validasi count/encoding. Tampilkan raw registers dan decoded values.
 
-Device memiliki mode master Modbus dua tag independen. Laptop harus menjadi slave/server melalui USB–RS485 untuk mengujinya; jangan menjadikan keduanya master pada bus yang sama.
+Tampilkan request/response hex, CRC/exception/timeout, latency, age/stale data. Polling hanya satu request outstanding pada port. Dokumentasikan konversi notasi 40001 bila disediakan; source of truth tetap offset protokol.
 
-Mode Simulator Slave Modbus menyediakan:
-- Slave ID dan serial settings configurable.
-- FC01 Read Coils, FC02 Read Discrete Inputs, FC03 Read Holding Registers, FC04 Read Input Registers.
-- Peta alamat/nilai yang bisa diubah teknisi.
-- Dua preset tag independen agar mudah dicocokkan dengan dashboard device.
-- Unsigned, signed, float32 sesuai batas firmware dan pilihan word order nilai dua register.
-- Raw register/bit dan nilai hasil interpretasi.
+Write FC05/06/15/16 boleh tahap lanjutan, bukan kebutuhan minimum. Bila ditambahkan harus aksi eksplisit, tidak auto polling/auto retry write yang outcome-nya ambigu.
 
-Alamat protokol zero-based adalah sumber kebenaran. Jika menampilkan 40001 dan sejenisnya, jelaskan konversi eksplisit. Tampilkan request masuk, slave/function/alamat/jumlah, response, expected value, timestamp, exception/error.
+## 7. Modbus RTU slave/server simulator
 
-Response terkirim dari laptop belum membuktikan device menerima/menafsirkan nilai. QC end-to-end harus membaca hasil device lewat API nyata atau meminta konfirmasi operator atas nilai yang tampil pada device. Dua tag sesuai menghasilkan PASS; yang belum diuji tidak PASS.
+Laptop menjadi slave ketika perangkat eksternal master. Sediakan unit ID, maps coils/discrete inputs/holding/input registers, editable values dan presets import/export. Dukung read FC01..04 dan exception untuk alamat/function/count invalid sesuai spesifikasi.
 
-Pisahkan fixture Modbus dari protokol paket QC custom. Jangan menamakan protokol custom sebagai Modbus. Mode fixture adalah alat pengujian nyata dengan nilai sintetis yang diketahui; bedakan dari mock transport tanpa hardware.
+Log request masuk/response dan decode. Nilai simulator sintetis tidak berarti transport-nya mock: tandai jelas REAL SERIAL + SYNTHETIC VALUES. Response terkirim bukan bukti master mengolahnya benar; pengujian end-to-end memerlukan hasil master atau konfirmasi user bila profil menyatakannya.
 
-## 8. Hasil QC
+Jangan mengaktifkan master dan slave bersamaan pada port yang sama. Jangan mengaktifkan dua master pada satu bus tanpa skenario protokol yang memang mendukungnya.
 
-Status: BELUM DIUJI, BERJALAN, PASS, FAIL, DIBATALKAN/INCOMPLETE, ERROR SETUP.
+## 8. Skenario pengujian configurable
 
-Tes paket PASS hanya jika semua transaksi wajib valid dan hasil device cocok dengan run laptop. Timeout, CRC/payload/sequence salah dan kegagalan transaksi harus tercatat. Retry tidak menghapus kegagalan; default nol error berarti berhasil setelah retry tidak mengubah run menjadi PASS.
+Profil JSON tervalidasi/schema versioned: nama/protokol, serial settings, langkah TX ASCII/HEX atau Modbus read, expected response, timeout, repeats, inter-step interval, optional framing/delimiter/length sesuai protokol.
 
-Stop bukan PASS. Port tidak tersedia sebelum mulai adalah ERROR SETUP, bukan bukti otomatis kerusakan hardware. Bedakan gangguan jaringan kontrol HTTP dari kegagalan serial; jika bukti akhir tidak lengkap jangan mengarang hardware FAIL atau PASS. Hasil run sebelumnya tidak boleh terbawa ke device baru.
+Minimum assertions: exact bytes, prefix/contains, length, serta nilai register dalam range/tolerance. CRC Modbus built-in; checksum custom hanya jika definisi lengkap tersedia. Jangan mengasumsikan checksum semua perangkat sama. Jika regex ditambahkan, batasi biaya/ukuran; jangan mengeksekusi script arbitrary dari profile.
 
-Modbus membedakan protokol valid, response terkirim, dan nilai end-to-end terkonfirmasi. Sediakan Sesuai/Tidak sesuai bila dibutuhkan; hasil per tag dan keseluruhan terlihat jelas.
+Sediakan contoh profil raw request/response dengan responder simulator dan contoh Modbus read. Jelaskan DUT harus mendukung pesan profil. Jangan kirim payload demo secara otomatis ke device tak dikenal.
 
-## 9. Antarmuka Bahasa Indonesia
+Loopback adalah skenario opsional adapter/kabel; beri label bahwa itu bukan bukti komunikasi DUT. Mode full-device harus memvalidasi respons sesuai kontrak dan menghindari local echo menjadi false PASS. Session/sequence ID hanya disisipkan jika protokol DUT mendukung, bukan dipaksakan pada raw protocol.
 
-Halaman/panel: Koneksi, QC RS232, QC RS485, Simulator Slave Modbus, Riwayat/Export.
+## 9. Kriteria dan tampilan hasil
 
-Koneksi: daftar COM/deskripsi adapter, Refresh, mode, baud/format yang didukung, IP/URL device editable, Cek koneksi, serial number, versi firmware, waktu build jika tersedia. Jangan hardcode IP/COM aktif dari sesi lama.
+Status BELUM DIUJI, BERJALAN, PASS, FAIL, ERROR SETUP, INCOMPLETE/DIBATALKAN. PASS hanya semua langkah/assertions wajib selesai valid. Stop/disconnect/restart tidak PASS. ERROR SETUP sebelum test tidak membuktikan hardware rusak.
 
-Kontrol: Mulai QC, Stop, Uji ulang, Device berikutnya/sesi baru, jumlah paket dan timeout sesuai batas firmware.
+Timeout/mismatch/CRC/exception dicatat dengan sebab. Retry terlihat dan tidak menghapus kegagalan; default QC nol error. Jika profil toleransi retry berbeda, simpan kebijakan itu dalam report. Jangan menyebut FAIL sebagai diagnosis komponen pasti tanpa bukti.
 
-Saat run: progress, transaksi valid/target, error/timeout, durasi, round-trip statistics jika dapat diukur, TX/RX ringkas dan detail hex opsional, alasan gagal yang mudah dibaca.
+UI Bahasa Indonesia: Koneksi, Terminal, Modbus Master, Modbus Slave, Skenario QC, Riwayat, Pengaturan Layanan. Besarkan PASS/FAIL berwarna plus teks/ikon di panel aktif. Tampilkan progress, target/valid/error, elapsed, latency bila tersedia, alasan dan log rinci. Raw JSON bukan tampilan utama.
 
-PASS besar hijau, FAIL besar merah, teks/ikon selain warna. Hasil ada di panel tes aktif, bukan hanya ringkasan. Raw JSON bukan UI utama operator. Kunci perubahan config yang tidak aman selama run, Stop tetap tersedia. Refresh browser tidak boleh membuat run kedua.
+Disable config berbahaya selama run, Stop tetap tersedia, run ID unik, double-click/two tabs tidak membuat run ganda. Identitas device opsional/manual atau protocol-specific; tampilkan unknown jika tidak tersedia, jangan menuntut MAC ESP.
 
-## 10. Ketahanan
+## 10. Persistensi dan export
 
-Tangani USB dicabut, COM busy/berubah, device reboot, IP salah, API bukan JSON, firmware incompatible, klik Mulai ganda, dua tab, buffer lama, partial/combined/corrupt/stale frames, sequence duplikat, Stop saat menunggu, dan shutdown saat port terbuka.
+Simpan profil, preferensi nonsecret, dan riwayat lokal di lokasi data per-user yang portable/configurable; repository bukan tempat log produksi. SQLite atau pilihan ringan lain dengan bounded retention/rotating logs. Simpan progress agar run terputus dapat direkonsiliasi sebagai INCOMPLETE.
 
-Satu pemilik port dan satu active run, run ID unik, cleanup pada sukses/gagal/cancel/exception. Simpan hasil bertahap. Run yang terputus ditandai INCOMPLETE setelah restart. Riwayat tetap tersedia untuk device berikutnya.
+Export CSV Excel UTF-8 dan JSON: run/profile version, waktu/zona, app version, identity jika ada, serial settings, mode/protokol, fixture REAL/MOCK/LOOPBACK, langkah/target/actual, raw data sesuai batas, duration/error/retry, status/alasan/catatan. CSV escaping dan formula injection ditangani. Jangan export secrets. Retention dan penghapusan data transparan.
 
-## 11. Riwayat dan export
+## 11. Ketahanan dan pengujian
 
-CSV Excel dan JSON berisi run ID, waktu/zona waktu, serial device, versi/build firmware jika tersedia, versi aplikasi, mode, COM/adapter, serial settings, target/berhasil/error/timeout/retry, durasi/latency jika ada, hasil/alasan, hasil laptop dan device terpisah, detail tag, catatan operator opsional.
+Tangani serial partial/combined frames, idle gaps/framing, noise, stale buffers, local echo, malformed responses, timeout, cancel, unplug, port busy, two tabs, crash, restart, resume sleep, invalid JSON profiles, log growth dan backend shutdown.
 
-Identitas yang tidak terbaca adalah unknown. Gunakan UTF-8 yang terbaca Excel, escaping benar, dan pencegahan formula injection kolom teks. Jangan menyertakan token/password. Data produksi lokal di-ignore Git.
+Test parser dengan golden vectors dari spesifikasi resmi/protokol yang dinyatakan. Test Modbus CRC, exception, address/count limits, endian, raw bytes, ownership, double start, assertions/PASS gate, cancellation, persistence recovery/export, UI bindings/API, installer idempotence/uninstall/autostart recovery. Verifikasi browser nyata dan laporkan batas hardware yang belum tersedia.
 
-## 12. Tests dan bukti
+Simulasi transport diberi label SIMULASI dan tidak boleh masuk report sebagai REAL hardware PASS. Sertakan soak test terukur beserta durasi/memori/log, jangan mengklaim stabil terus-menerus dari test singkat.
 
-Uji golden frames dari firmware, CRC/payload/run/sequence/ACK, partial/combined/corrupt/stale/local echo, timeout/cancel/COM busy/disconnect, PASS gate, single owner, Modbus exception/response, dua tag/endianness, frontend dengan elemen/API nyata, export/riwayat.
+## 12. Integrasi opsional Compact QC
 
-Sediakan mock transport untuk development dengan label SIMULASI. Mock tidak boleh menghasilkan laporan hardware PASS nyata. Jika hardware belum tersedia, selesaikan source/automated tests dan tandai hardware acceptance belum dilakukan.
+Hanya setelah fitur generik: adapter profil terpisah untuk https://github.com/TaufikAS0/compact-qc-tester-v2-r1, baseline v1.5.0 commit fa0624ea3d979f2a87ff3db118a46c4ad6ca0387, branch feature/qc-operator-ota.
 
-## 13. Deliverable
+Cari tools/laptop-qc/, launcher dan serial protocol source, dokumentasikan frame/API sebenarnya dan reuse setelah audit lisensi/provenance. IP ESP, endpoint arm/heartbeat, GPIO4/5 dan selector MCP2A2 hanya milik profil tersebut. Core umum harus berjalan meski profil Compact tidak diinstall dan firmware reference tidak di-clone. Tidak ada kebutuhan upload firmware untuk menyelesaikan aplikasi generik.
 
-Source lengkap, launcher Windows, dependency/setup, README, wiring, kontrak serial/API berdasarkan kode aktual, panduan operator ketiga mode, tests/hasil, contoh export simulasi, checklist hardware, dan checkpoint yang cukup untuk AI berikutnya.
+## 13. Deliverable dan acceptance
 
-## 14. Batas dan cara bekerja
+Berikan source runnable, setup dependency reproducible, launcher/startup install/uninstall/status, README, wiring, schema/protocol docs, sample profiles, tests/results, screenshots UI, sample reports SIMULASI, checklist hardware dan STATUS checkpoint.
 
-Fokus aplikasi laptop; firmware tidak diubah jika kontrak cukup. Jika blocker firmware, tunjukkan file/masalah/perubahan minimal. Jangan diam-diam mengganti protokol atau upload firmware; tim user melakukan upload.
+Acceptance inti: aplikasi membuka localhost tanpa ESP; port bisa dipilih; raw ASCII/HEX bekerja pada fixture; Modbus master dan slave bekerja sesuai peran; skenario PASS/FAIL mengikuti assertions; browser bisa ditutup/dibuka tanpa kehilangan state; service autostart/recovery diuji; tidak auto-send setelah reboot; export/history benar.
 
-Baca AGENTS/aturan workspace, audit status/branch/remote, pertahankan perubahan orang lain, gunakan feature branch dari develop dan PR; jangan merge otomatis atau push main.
-
-Mulai dengan ringkasan apa yang tersedia, gap, kontrak yang ditemukan, dan urutan implementasi. Lalu langsung kerjakan sampai deliverable terpenuhi. Perbarui STATUS.md setiap checkpoint, jangan berhenti pada rencana/mockup.
+Audit repo/aturan terlebih dahulu, kerjakan feature branch dan PR tanpa merge otomatis. Jangan upload firmware. Jika hardware tidak tersedia, selesaikan source/tests dan dokumentasikan acceptance yang pending. Mulai dengan gap/arsitektur singkat lalu langsung implementasikan; update checkpoint tiap tahap supaya pekerjaan dapat dilanjutkan AI lain.
